@@ -10,14 +10,21 @@ function assertNonNull(thing) {
 }
 
 /**
- * @typedef {Object} Point
- * @property {number} x
- * @property {number} y
+ * @typedef {Object} Point2D
+ * @property {number} x [-1, 1]
+ * @property {number} y [-1, 1]
+ */
+
+/**
+ * @typedef {Object} Point3D
+ * @property {number} x [-1, 1]
+ * @property {number} y [-1, 1]
+ * @property {number} z [-1, 1]
  */
 //#endregion
 
 /**
- * @param {Point} param0 
+ * @param {Point2D} point
  */
 function translate({ x, y }) {
   // -1..1 | 0..maxHeight/maxWidth
@@ -28,7 +35,7 @@ function translate({ x, y }) {
 }
 
 /**
- * @param {Point} param0 
+ * @param {Point2D} point 
  */
 function point({ x, y }) {
   const size = 10;
@@ -37,8 +44,8 @@ function point({ x, y }) {
 }
 
 /**
- * @param {Point} p1 
- * @param {Point} p2 
+ * @param {Point2D} p1 
+ * @param {Point2D} p2 
  */
 function line(p1, p2) {
   ctx.strokeStyle = pointColor;
@@ -46,6 +53,17 @@ function line(p1, p2) {
   ctx.moveTo(p1.x, p1.y)
   ctx.lineTo(p2.x, p2.y)
   ctx.stroke();
+}
+
+/**
+ * @param {Point3D} point
+ * @returns {Point2D}
+ */
+function project({ x, y, z }) {
+  return {
+    x: x / z,
+    y: y / z
+  }
 }
 
 //#region main
@@ -63,12 +81,6 @@ graph.height = maxHeight;
 ctx.strokeStyle = borderColor;
 ctx.strokeRect(0, 0, maxWidth, maxHeight);
 
-point(translate({ x: -1, y: 1 }));
-point(translate({ x: 1, y: 1 }));
-point(translate({ x: 0, y: 0 }))
-point(translate({ x: -1, y: -1 }));
-point(translate({ x: 1, y: -1 }));
+point(translate(project({ x: 0.5, y: 0, z: 1 })));
 
-line(translate({ x: -1, y: 1 }), translate({ x: 1, y: -1 }));
-line(translate({ x: -1, y: -1 }), translate({ x: 1, y: 1 }));
 //#endregion
