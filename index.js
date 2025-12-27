@@ -21,6 +21,24 @@ function assertNonNull(thing) {
  * @property {number} y
  * @property {number} z
  */
+
+/**
+ * @typedef {Object} CanvasAnimationState
+ * @property {number} dTheta
+ * @property {number} dZ
+ */
+
+/**
+ * @typedef {Object} AnimatableCanvasObject
+ * @property {Point3D[]} points
+ * @property {number[][]} vectors indexes of points to connect
+ * @property {{
+ *   initialState: CanvasAnimationState,
+ *   tranformPoint: (p: Point3D, currentState: CanvasAnimationState) => Point3D,
+ *   transformState: (dt: number, currentState: CanvasAnimationState) => CanvasAnimationState,
+ *   fps: number,
+ * }} animation
+ */
 //#endregion
 
 //#region functions
@@ -66,10 +84,12 @@ function line(p1, p2) {
  * @returns {Point2D}
  */
 function project({ x, y, z }) {
-  return z === 0 ? { x, y } : {
-    x: x / z,
-    y: y / z,
-  };
+  return z === 0
+    ? { x, y }
+    : {
+      x: x / z,
+      y: y / z,
+    };
 }
 
 /**
@@ -78,14 +98,16 @@ function project({ x, y, z }) {
  */
 function translateZ({ x, y, z }, dz) {
   return {
-    x, y, z: z + dz
-  }
+    x,
+    y,
+    z: z + dz,
+  };
 }
 
 /**
  * @param {Point3D} p
  * @param {number} theta rotation degree
- * 
+ *
  * @see https://en.wikipedia.org/wiki/Rotation_matrix
  */
 function rotateAroundY({ x, y, z }, theta) {
@@ -94,6 +116,33 @@ function rotateAroundY({ x, y, z }, theta) {
     y, // rotate around y axis, keep y unchanged
     z: x * Math.sin(theta) + z * Math.cos(theta),
   };
+}
+
+/**
+ * @param {AnimatableCanvasObject} canvasObject
+ */
+function animate({ points, vectors, animation }) {
+  let state = animation.initialState;
+  (function renderFrame() {
+    const dt = 1 / animation.fps;
+    state = animation.transformState(dt, state);
+
+    clear();
+    const pointsInFrame = points
+      .map((p) => animation.tranformPoint(p, state))
+      .map(project)
+      .map(translate);
+
+    vectors.forEach((lines) => {
+      for (let i = 0; i < lines.length; i++) {
+        line(
+          pointsInFrame[lines[i]],
+          pointsInFrame[lines[(i + 1) % lines.length]]
+        );
+      }
+    });
+    setTimeout(renderFrame, 1000 / animation.fps);
+  })();
 }
 //#region
 
@@ -110,52 +159,41 @@ graph.height = maxHeight;
 const ctx = assertNonNull(graph.getContext('2d'));
 
 /**
- * @type {Array<Point3D>}
+ * @type {AnimatableCanvasObject}
  */
-const points = [
-  { x: 0.5, y: 0.5, z: 0.5 },
-  { x: -0.5, y: 0.5, z: 0.5 },
-  { x: -0.5, y: -0.5, z: 0.5 },
-  { x: 0.5, y: -0.5, z: 0.5 },
-  { x: 0.5, y: 0.5, z: -0.5 },
-  { x: -0.5, y: 0.5, z: -0.5 },
-  { x: -0.5, y: -0.5, z: -0.5 },
-  { x: 0.5, y: -0.5, z: -0.5 },
-];
+const cubes = {
+  points: [
+    { x: 0.5, y: 0.5, z: 0.5 },
+    { x: -0.5, y: 0.5, z: 0.5 },
+    { x: -0.5, y: -0.5, z: 0.5 },
+    { x: 0.5, y: -0.5, z: 0.5 },
+    { x: 0.5, y: 0.5, z: -0.5 },
+    { x: -0.5, y: 0.5, z: -0.5 },
+    { x: -0.5, y: -0.5, z: -0.5 },
+    { x: 0.5, y: -0.5, z: -0.5 },
+  ],
+  vectors: [
+    [0, 1, 2, 3],
+    [4, 5, 6, 7],
+    [0, 4],
+    [1, 5],
+    [2, 6],
+    [3, 7],
+  ],
+  animation: {
+    initialState: {
+      dTheta: 0,
+      dZ: 1,
+    },
+    tranformPoint: (p, { dTheta, dZ }) =>
+      translateZ(rotateAroundY(p, dTheta), dZ),
+    transformState: (dt, { dTheta, dZ }) => ({
+      dTheta: dTheta + dt * Math.PI,
+      dZ: dZ + dt,
+    }),
+    fps: 30,
+  },
+};
 
-/**
- * @type {Array<number[]>} indexes of points to connect
- */
-const vectors = [
-  [0, 1, 2, 3],
-  [4, 5, 6, 7],
-  [0, 4],
-  [1, 5],
-  [2, 6],
-  [3, 7],
-]
-
-const fps = 30;
-let dZ = 0;
-let dTheta = 0;
-(function renderFrame() {
-  const dt = 1 / fps;
-  dZ += dt;
-  dTheta += dt * (Math.PI);
-
-
-  clear();
-  const pointsInFrame = points
-    .map(p => rotateAroundY(p, dTheta))
-    .map(p => translateZ(p, dZ))
-    .map(project)
-    .map(translate);
-
-  vectors.forEach(lines => {
-    for (let i = 0; i < lines.length; i++) {
-      line(pointsInFrame[lines[i]], pointsInFrame[lines[(i + 1) % lines.length]]);
-    }
-  })
-  setTimeout(renderFrame, 1000 / fps);
-})();
+animate(cubes);
 //#endregion
