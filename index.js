@@ -36,7 +36,7 @@ function clear() {
 function translate({ x, y }) {
   return {
     x: ((x + 1) / 2) * maxWidth,
-    y: (Math.abs(y - 1) / 2) * maxHeight,
+    y: (1 - (y + 1) / 2) * maxHeight,
   };
 }
 
@@ -66,7 +66,7 @@ function line(p1, p2) {
  * @returns {Point2D}
  */
 function project({ x, y, z }) {
-  return {
+  return z === 0 ? { x, y } : {
     x: x / z,
     y: y / z,
   };
@@ -136,11 +136,11 @@ const vectors = [
 ]
 
 const fps = 30;
-let dZ = 2;
+let dZ = 0;
 let dTheta = 0;
 (function renderFrame() {
   const dt = 1 / fps;
-  dZ += 0;
+  dZ += dt;
   dTheta += dt * (Math.PI);
 
 
