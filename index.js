@@ -24,8 +24,10 @@ function assertNonNull(thing) {
 
 /**
  * @typedef {Object} CanvasAnimationState
- * @property {number} dTheta
+ * @property {number} dX
+ * @property {number} dY
  * @property {number} dZ
+ * @property {number} dTheta
  */
 
 /**
@@ -34,7 +36,6 @@ function assertNonNull(thing) {
  * @property {number[][]} vectors indexes of points to connect
  * @property {{
  *   initialState: CanvasAnimationState,
- *   tranformPoint: (p: Point3D, currentState: CanvasAnimationState) => Point3D,
  *   transformState: (dt: number, currentState: CanvasAnimationState) => CanvasAnimationState,
  *   fps: number,
  * }} animation
@@ -51,7 +52,7 @@ function clear() {
  * @param {Point2D} point cartesian coordinates of ([-1, 1], [-1, 1])
  * @returns canvas coordinates of ([0, maxWidth], [0, maxHeight])
  */
-function translate({ x, y }) {
+function toCanvasCoordinate({ x, y }) {
   return {
     x: ((x + 1) / 2) * maxWidth,
     y: (1 - (y + 1) / 2) * maxHeight,
@@ -94,13 +95,13 @@ function project({ x, y, z }) {
 
 /**
  * @param {Point3D} p
- * @param {number} dz
+ * @param {CanvasAnimationState} state
  */
-function translateZ({ x, y, z }, dz) {
+function translate({ x, y, z }, state) {
   return {
-    x,
-    y,
-    z: z + dz,
+    x: x + state.dX,
+    y: y + state.dY,
+    z: z + state.dZ,
   };
 }
 
@@ -129,9 +130,9 @@ function animate({ points, vectors, animation }) {
 
     clear();
     const pointsInFrame = points
-      .map((p) => animation.tranformPoint(p, state))
+      .map(p => translate(rotateAroundY(p, state.dTheta), state))
       .map(project)
-      .map(translate);
+      .map(toCanvasCoordinate);
 
     vectors.forEach((lines) => {
       for (let i = 0; i < lines.length; i++) {
@@ -182,14 +183,15 @@ const cubes = {
   ],
   animation: {
     initialState: {
-      dTheta: 0,
+      dX: 0,
+      dY: 0,
       dZ: 1,
+      dTheta: 0,
     },
-    tranformPoint: (p, { dTheta, dZ }) =>
-      translateZ(rotateAroundY(p, dTheta), dZ),
-    transformState: (dt, { dTheta, dZ }) => ({
-      dTheta: dTheta + dt * Math.PI,
-      dZ: dZ + dt,
+    transformState: (dt, currentState) => ({
+      ...currentState,
+      dZ: currentState.dZ + dt,
+      dTheta: currentState.dTheta + dt * Math.PI,
     }),
     fps: 30,
   },
