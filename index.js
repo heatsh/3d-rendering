@@ -32,8 +32,8 @@ function assertNonNull(thing) {
 
 /**
  * @typedef {Object} AnimatableCanvasObject
- * @property {Point3D[]} points
- * @property {number[][]} vectors indexes of points to connect
+ * @property {Point3D[]} vertices
+ * @property {number[][]} faces indexes of points to connect
  * @property {{
  *   initialState: CanvasAnimationState,
  *   transformState: (dt: number, currentState: CanvasAnimationState) => CanvasAnimationState,
@@ -122,7 +122,7 @@ function rotateAroundY({ x, y, z }, theta) {
 /**
  * @param {AnimatableCanvasObject} canvasObject
  */
-function animate({ points, vectors, animation }) {
+function animate({ vertices: points, faces: vectors, animation }) {
   let state = animation.initialState;
   (function renderFrame() {
     const dt = 1 / animation.fps;
@@ -163,7 +163,7 @@ const ctx = assertNonNull(graph.getContext('2d'));
  * @type {AnimatableCanvasObject}
  */
 const cubes = {
-  points: [
+  vertices: [
     { x: 0.5, y: 0.5, z: 0.5 },
     { x: -0.5, y: 0.5, z: 0.5 },
     { x: -0.5, y: -0.5, z: 0.5 },
@@ -173,7 +173,7 @@ const cubes = {
     { x: -0.5, y: -0.5, z: -0.5 },
     { x: 0.5, y: -0.5, z: -0.5 },
   ],
-  vectors: [
+  faces: [
     [0, 1, 2, 3],
     [4, 5, 6, 7],
     [0, 4],
