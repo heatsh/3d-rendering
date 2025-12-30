@@ -50,15 +50,19 @@ const cubes = {
 animate(canvasContext, cubes);
 
 /**
- * @type {HTMLInputElement}
+ * @param {SubmitEvent} event
  */
-const fileInput = assertNonNull(document.querySelector('#objFileInput'));
-fileInput.addEventListener('change', (evt) => {
-  const file = fileInput?.files?.[0];
-  if (!file) {
+function updateCanvas(event) {
+  event.preventDefault();
+
+  const formInput =
+    event.target instanceof HTMLFormElement
+      ? getFormInput(new FormData(event.target))
+      : undefined;
+
+  if (!formInput) {
     return;
   }
-
   const reader = new FileReader();
 
   reader.onload = function (event) {
@@ -71,11 +75,13 @@ fileInput.addEventListener('change', (evt) => {
     animate(canvasContext, {
       ...waveFrontObj,
       animation: {
-        initialState: { dX: 0, dY: -0.5, dZ: 0, dTheta: 0 },
+        initialState: formInput.initialState,
         transformState: (dt, currentState) => ({
-          ...currentState,
-          dZ: currentState.dZ + dt / 2,
-          dTheta: currentState.dTheta + dt * Math.PI,
+          dX: currentState.dX + dt * formInput.multipliers.dX,
+          dY: currentState.dY + dt * formInput.multipliers.dY,
+          dZ: currentState.dZ + dt * formInput.multipliers.dZ,
+          dTheta:
+            currentState.dTheta + dt * Math.PI * formInput.multipliers.dTheta,
         }),
         fps: 30,
       },
@@ -86,6 +92,5 @@ fileInput.addEventListener('change', (evt) => {
     alert('Failed to read file');
   };
 
-  reader.readAsText(file);
-});
-//#endregion
+  reader.readAsText(formInput.objFile);
+}
