@@ -49,7 +49,6 @@ function assertNonNull(thing) {
  */
 //#endregion
 
-//#region functions
 /**
  * @param {CanvasContext} canvasContext
  */
@@ -132,35 +131,33 @@ function rotateAroundY({ x, y, z }, theta) {
   };
 }
 
+let nextFrameRef = 0;
 /**
  * @param {CanvasContext} canvasContext
  * @param {AnimatableCanvasObject} animatableCanvasObject
  */
-function animate(
-  canvasContext,
-  { vertices: points, faces: vectors, animation }
-) {
+function animate(canvasContext, { vertices, faces, animation }) {
+  clearTimeout(nextFrameRef);
   let state = animation.initialState;
   (function renderFrame() {
     const dt = 1 / animation.fps;
     state = animation.transformState(dt, state);
 
     clear(canvasContext);
-    const pointsInFrame = points
+    const pointsInFrame = vertices
       .map((p) => translate(rotateAroundY(p, state.dTheta), state))
       .map(project)
       .map((p) => toCanvasCoordinate(canvasContext, p));
 
-    vectors.forEach((lines) => {
-      for (let i = 0; i < lines.length; i++) {
+    faces.forEach((face) => {
+      for (let i = 0; i < face.length; i++) {
         line(
           canvasContext,
-          pointsInFrame[lines[i]],
-          pointsInFrame[lines[(i + 1) % lines.length]]
+          pointsInFrame[face[i]],
+          pointsInFrame[face[(i + 1) % face.length]]
         );
       }
     });
-    setTimeout(renderFrame, 1000 / animation.fps);
+    nextFrameRef = setTimeout(renderFrame, 1000 / animation.fps);
   })();
 }
-//#endregion

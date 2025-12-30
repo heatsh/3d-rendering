@@ -40,7 +40,7 @@ const cubes = {
     },
     transformState: (dt, currentState) => ({
       ...currentState,
-      dZ: currentState.dZ + dt,
+      dZ: currentState.dZ + dt / 2,
       dTheta: currentState.dTheta + dt * Math.PI,
     }),
     fps: 30,
@@ -48,4 +48,44 @@ const cubes = {
 };
 
 animate(canvasContext, cubes);
+
+/**
+ * @type {HTMLInputElement}
+ */
+const fileInput = assertNonNull(document.querySelector('#objFileInput'));
+fileInput.addEventListener('change', (evt) => {
+  const file = fileInput?.files?.[0];
+  if (!file) {
+    return;
+  }
+
+  const reader = new FileReader();
+
+  reader.onload = function (event) {
+    const objContent = event.target?.result;
+    if (typeof objContent !== 'string') {
+      return;
+    }
+
+    const waveFrontObj = parseWavefrontObj(objContent);
+    animate(canvasContext, {
+      ...waveFrontObj,
+      animation: {
+        initialState: { dX: 0, dY: -0.5, dZ: 0, dTheta: 0 },
+        transformState: (dt, currentState) => ({
+          ...currentState,
+          dZ: currentState.dZ + dt / 2,
+          dTheta: currentState.dTheta + dt * Math.PI,
+        }),
+        fps: 30,
+      },
+    });
+  };
+
+  reader.onerror = function () {
+    alert('Failed to read file');
+  };
+
+  reader.readAsText(file);
+});
 //#endregion
