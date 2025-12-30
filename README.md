@@ -8,3 +8,7 @@ Trying out concepts learnt from [tsoding](https://www.youtube.com/watch?v=qjWkNZ
 # Demo
 
 https://heatsh.github.io/3d-rendering/
+
+# Obj file
+
+- pengu obj provided by https://github.com/Max-Kawula/penger-obj
